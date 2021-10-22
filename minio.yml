@@ -1,0 +1,88 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+name: minio
+spec:
+serviceName: minio
+selector:
+  matchLabels:
+    name: minio
+replicas: 1
+template:
+  metadata:
+    labels:
+      name: minio
+  spec:
+    containers:
+      - name: minio-container
+        image: quay.io/minio/minio:RELEASE.2021-09-23T04-46-24Z.fips
+        imagePullPolicy: IfNotPresent
+        command: ["minio", "server", "/data", "--console-address", ":9001"] # console address keeps a static port for minio ui
+        env:
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: sorry-cypress-secret
+                key: minio-access-key
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: sorry-cypress-secret
+                key: minio-secret-key
+        volumeMounts:
+          - mountPath: /data
+            name: minio-data
+        ports:
+          - containerPort: 9000
+            protocol: TCP
+          - containerPort: 9001
+            protocol: TCP
+        resources:
+          limits:
+            memory: 256Mi
+        readinessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
+volumeClaimTemplates:
+  - metadata:
+      name: minio-data
+      labels:
+        app: sorry-cypress
+      annotations:
+        volume.alpha.kubernetes.io/storage-class: anything
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 256Mi
+---
+# Minio core service
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  labels:
+    app: sorry-cypress
+spec:
+  selector:
+    name: minio
+  ports:
+    - name: 9000-tcp
+      port: 9000
+---
+# Minio ui service
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-ui
+  labels:
+    app: sorry-cypress
+spec:
+  selector:
+    name: minio
+  ports:
+    - name: 9001-tcp
+      port: 9001

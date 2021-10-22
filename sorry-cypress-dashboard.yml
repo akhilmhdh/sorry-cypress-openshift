@@ -1,0 +1,63 @@
+# Deployment
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: sorry-cypress-dashboard
+  labels:
+    app: sorry-cypress
+    template.alpha.openshift.io/wait-for-ready: "true"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 4
+  selector:
+    name: sorry-cypress-dashboard
+  strategy:
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        name: sorry-cypress-dashboard
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: quay.io/akhilmhdh/sorry-cypress-dashboard:2.0.0-beta.14
+          imagePullPolicy: Always
+          name: sorry-cypress-dashboard
+          volumeMounts:
+            - name: sorry-cypress-dashboard-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          resources:
+            limits:
+              memory: 256Mi
+          env:
+            - name: GRAPHQL_SCHEMA_URL
+              value: "http://sorry-cypress-api-akhi.int.open.paas.redhat.com"
+            - name: GRAPHQL_CLIENT_CREDENTIALS
+              value: ""
+            - name: PORT
+              value: "8080"
+            - name: CI_URL
+              value: ""
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+      volumes:
+        - name: sorry-cypress-dashboard-config
+          configMap:
+            name: sorry-cypress-dashboard-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sorry-cypress-dashboard
+  labels:
+    app: sorry-cypress
+spec:
+  selector:
+    name: sorry-cypress-dashboard
+  ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080

@@ -1,0 +1,51 @@
+# Deployment
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: sorry-cypress-api
+  labels:
+    app: sorry-cypress
+    template.alpha.openshift.io/wait-for-ready: "true"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 4
+  selector:
+    name: sorry-cypress-api
+  strategy:
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        name: sorry-cypress-api
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: quay.io/akhilmhdh/sorry-cypress-api:2.0.0-beta.14
+          imagePullPolicy: Always
+          name: sorry-cypress-api
+          resources:
+            limits:
+              memory: 256Mi
+          env:
+            - name: MONGODB_URI
+              value: "mongodb://mongo:27017"
+            - name: MONGODB_DATABASE
+              value: "sorry-cypress"
+          ports:
+            - containerPort: 4000
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sorry-cypress-api
+  labels:
+    app: sorry-cypress
+spec:
+  selector:
+    name: sorry-cypress-api
+  ports:
+    - name: 4000-tcp
+      port: 4000
+      protocol: TCP
+      targetPort: 4000

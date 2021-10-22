@@ -1,0 +1,21 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: sorry-cypress-dashboard-config
+  labels:
+    app: sorry-cypress
+data:
+  default.conf: |
+    server {
+      include mime.types;
+      types 
+      {
+        application/javascript mjs;
+      }
+
+      listen 8080 default_server;
+      root /usr/share/nginx/html;
+      try_files $uri /index.html;
+      sub_filter '<?- SORRY_CYPRESS_ENVIRONMENT ?>' '{ GRAPHQL_CLIENT_CREDENTIALS: "", GRAPHQL_SCHEMA_URL: "external route to sorry-cypress-api", CI_URL: "" }';
+      sub_filter_once on;	
+    }

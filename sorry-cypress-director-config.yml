@@ -1,0 +1,17 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: sorry-cypress-director-config
+  labels:
+    app: sorry-cypress
+data:
+  DASHBOARD_URL: "<the dashboard url that needs to shown in command line -- external ip>"
+  MONGODB_URI: ""
+  MONGODB_DATABASE: ""
+  EXECUTION_DRIVER: "../execution/mongo/driver" # change driver for other db
+  SCREENSHOTS_DRIVER: "../screenshots/minio.driver" # Use dummy driver if not using minio
+  MINIO_ENDPOINT: "< external minio end point without http or port>"
+  MINIO_URL: "<external minio url in url format>"
+  MINIO_PORT: "<minio port>"
+  MINIO_USESSL: "<if http set as true else false>"
+  MINIO_BUCKET: "sorry-cypress"

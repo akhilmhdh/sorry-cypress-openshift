@@ -1,0 +1,72 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: mongo
+  labels:
+    app: sorry-cypress
+    app.kubernetes.io/component: mongo
+    app.kubernetes.io/instance: mongo
+    app.kubernetes.io/part-of: sorry-cypress
+    app.kubernetes.io/name: mongodb
+    app.openshift.io/runtime: mongodb
+    app.openshift.io/runtime-version: "4"
+spec:
+  serviceName: mongo
+  selector:
+    matchLabels:
+      name: mongo
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: mongo
+        app: sorry-cypress
+    spec:
+      containers:
+        - name: mongo-container
+          image: quay.io/bitnami/mongodb:4
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /bitnami/mongodb
+              name: data
+          ports:
+            - containerPort: 27017
+              protocol: TCP
+          resources:
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            tcpSocket:
+              port: 27017
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+      securityContext:
+        supplementalGroups:
+          - 10000003
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: sorry-cypress
+        annotations:
+          volume.alpha.kubernetes.io/storage-class: anything
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 256Mi
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  labels:
+    app: sorry-cypress
+spec:
+  selector:
+    name: mongo
+  ports:
+    - name: 27017-tcp
+      port: 27017

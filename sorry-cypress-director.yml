@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: sorry-cypress-director
+  labels:
+    app: sorry-cypress
+    template.alpha.openshift.io/wait-for-ready: "true"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 4
+  selector:
+    name: sorry-cypress-director
+  strategy:
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        name: sorry-cypress-director
+    spec:
+      restartPolicy: Always
+      containers:
+        - image: quay.io/akhilmhdh/sorry-cypress-director:2.0.0-beta.14
+          imagePullPolicy: Always
+          name: sorry-cypress-director
+          resources:
+            limits:
+              memory: 256Mi
+          envFrom:
+            - configMapRef:
+                name: sorry-cypress-director-config
+          env:
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sorry-cypress-secret
+                  key: minio-access-key
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sorry-cypress-secret
+                  key: minio-secret-key
+          ports:
+            - containerPort: 1234
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sorry-cypress-director
+  labels:
+    app: sorry-cypress
+spec:
+  selector:
+    name: sorry-cypress-director
+  ports:
+    - name: 1234-tcp
+      port: 1234
+      protocol: TCP
+      targetPort: 1234
